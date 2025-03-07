@@ -1,0 +1,52 @@
+<div class="grid-Header" [ngClass]="Config.theme">
+    <div class="pagination">
+        <button (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+        <span>Page {{currentPage}} of {{totalPages}}</span>
+        <button (click)="nextPage()" [disabled]="currentPage >= totalPages">Next</button>
+    </div>
+
+    <div class="grid-Settings">
+        <div class="display-range">{{ displayRange }}</div>
+    </div>
+</div>
+
+
+<div [ngClass]="Config.theme" class="my-grid-container" [ngStyle]="{'height': Config.height, 'width': Config.width}">
+    <table class="my-grid-table">
+        <thead class="sticky-header">
+            <tr>
+                <th *ngFor="let column of ColumnHeadings" [ngStyle]="{'width': column.width || 'auto'}">
+                    <div class="column-header" (click)="onHeaderClick($event, column)">
+                        {{ column.label }}
+                        <span *ngIf="sortColumn === column.key">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                        </span>
+                        <span *ngIf="isFilterApplied(column.key)" class="filter-indicator">🔍</span>
+                    </div>
+
+
+                    <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
+                        (input)="applyFilters()" (click)="$event.stopPropagation()"
+                        placeholder="Search {{column.label}}" [attr.type]="getInputType(column)" />
+                </th>
+            </tr>
+            <tr class="sum-row">
+                <td *ngFor="let column of ColumnHeadings">
+                    <ng-container *ngIf="isSummable(column)">
+                        {{ getColumnSum(column.key) }}
+                    </ng-container>
+                </td>
+            </tr>
+        </thead>
+
+
+
+        <tbody>
+            <tr *ngFor="let row of paginatedData">
+                <td *ngFor="let column of ColumnHeadings">
+                    {{ row[column.key] }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

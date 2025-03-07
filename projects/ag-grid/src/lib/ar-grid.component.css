@@ -1,0 +1,261 @@
+.my-grid-container {
+    overflow-x: auto;
+    overflow-y: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-height: 500px;
+    /* Set max height as needed */
+    position: relative;
+}
+
+/* Table base */
+.my-grid-table {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+}
+
+/* Sticky Headers */
+.my-grid-table thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #c9c9c9;
+}
+
+/* Sticky Sum Row (directly below headers) */
+.my-grid-table .sum-column tr {
+    position: sticky;
+    top: 36px;
+    /* This must match the height of the header row */
+    z-index: 1;
+    font-weight: bold;
+}
+
+/* Columns */
+.my-grid-table th {
+    padding: 10px;
+    bottom: 1px solid #ddd;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+th {
+    position: relative;
+    text-align: center;
+}
+
+
+.my-grid-table td {
+    padding: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Sticky Search Inputs (inside header cells) */
+.my-grid-table th .search-box {
+    width: 90%;
+    margin-top: 4px;
+}
+
+/* Optional: Adjust for dark mode */
+.dark .my-grid-table thead tr,
+.dark .my-grid-table .sum-column tr {
+    background-color: #333;
+    color: #fff;
+}
+
+.dark .my-grid-table {
+    color: #fff;
+}
+
+
+/* Column Header + Sort Icons */
+.column-header {
+    display: flex;
+    align-items: center;    /* Center horizontally */
+    justify-content: center; /* Center vertically */
+    gap: 4px;                /* Add some spacing between label and search box */
+    text-align: center;
+    width: 100%;
+    height: 100%;
+}
+
+.column-header span {
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+
+/* Search Box */
+.search-box {
+    width: 90%;
+    padding: 6px 8px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+    outline: none;
+    text-align: center;
+}
+
+.dark .search-box {
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+/* Column Resizer */
+.resizer {
+    width: 4px;
+    height: 100%;
+    cursor: col-resize;
+    position: absolute;
+    right: 0;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.resizer:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.grid-Header{
+    display: flex;
+    justify-content: space-between;
+}
+
+.light .grid-Header{
+    background-color:#c7c7c7;
+}
+
+.dark {
+    background-color:#6d6d6d;
+    color:white;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.pagination button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dark .pagination button {
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+}
+
+/* Hover effect */
+.pagination button:hover:not(:disabled) {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.grid-Settings{
+    display: grid;
+    place-items: center;
+    margin-right: 10px;
+}
+
+.display-range{
+    font-size: 12px;
+    opacity: .7;
+}
+
+/* Sticky Header Section (includes headers + search boxes) */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.sum-row {
+    position: sticky;
+    top: 60px;  /* Adjust this based on your header height */
+    z-index: 9;
+    font-weight: bold;
+    text-align: right;
+}
+
+.filter-indicator {
+    color: #007bff;  /* or any color you want */
+    font-weight: bold;
+    margin-left: 4px;
+    font-size: 12px;
+}
+
+
+/* Sum Row directly under headers */
+.sum-column {
+    position: sticky;
+    top: 36px;
+    /* This depends on the height of the header row */
+    z-index: 1;
+}
+
+.sum-column tr {
+    background-color: rgba(0, 0, 0, 0.05);
+    font-weight: bold;
+}
+
+.light .sum-column tr {
+    background-color: #f5f5f5;
+    color: #222;
+}
+
+.dark .sum-column tr {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+}
+
+.sum-column td {
+    padding: 10px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* Rows and alternating colors */
+tbody tr:nth-child(odd) {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.light tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.dark tbody tr:nth-child(odd) {
+    background-color: #2a2a2a;
+}
+
+.dark tbody tr:nth-child(even) {
+    background-color: #1e1e1e;
+}
+
+/* Hover row */
+tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.dark tbody tr:hover {
+    background-color: rgba(136, 186, 101, 0.2);
+    color: black;
+}
