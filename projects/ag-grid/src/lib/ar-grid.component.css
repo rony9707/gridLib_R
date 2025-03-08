@@ -1,261 +1,352 @@
-.my-grid-container {
-    overflow-x: auto;
-    overflow-y: auto;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-height: 500px;
-    /* Set max height as needed */
-    position: relative;
+:host{
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Table base */
-.my-grid-table {
-    border-collapse: collapse;
-    width: max-content;
-    min-width: 100%;
-    table-layout: fixed;
+/* Base Styles */
+.grid-Header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: var(--header-bg, #f1f1f1);
+  border-bottom: 1px solid #ddd;
+  font-family: Arial, sans-serif;
 }
 
-/* Sticky Headers */
-.my-grid-table thead tr {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background-color: #c9c9c9;
-}
-
-/* Sticky Sum Row (directly below headers) */
-.my-grid-table .sum-column tr {
-    position: sticky;
-    top: 36px;
-    /* This must match the height of the header row */
-    z-index: 1;
-    font-weight: bold;
-}
-
-/* Columns */
-.my-grid-table th {
-    padding: 10px;
-    bottom: 1px solid #ddd;
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-th {
-    position: relative;
-    text-align: center;
-}
-
-
-.my-grid-table td {
-    padding: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Sticky Search Inputs (inside header cells) */
-.my-grid-table th .search-box {
-    width: 90%;
-    margin-top: 4px;
-}
-
-/* Optional: Adjust for dark mode */
-.dark .my-grid-table thead tr,
-.dark .my-grid-table .sum-column tr {
-    background-color: #333;
-    color: #fff;
-}
-
-.dark .my-grid-table {
-    color: #fff;
-}
-
-
-/* Column Header + Sort Icons */
-.column-header {
-    display: flex;
-    align-items: center;    /* Center horizontally */
-    justify-content: center; /* Center vertically */
-    gap: 4px;                /* Add some spacing between label and search box */
-    text-align: center;
-    width: 100%;
-    height: 100%;
-}
-
-.column-header span {
-    font-size: 12px;
-    margin-left: 4px;
-}
-
-
-/* Search Box */
-.search-box {
-    width: 90%;
-    padding: 6px 8px;
-    margin-top: 4px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 12px;
-    outline: none;
-    text-align: center;
-}
-
-.dark .search-box {
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #555;
-}
-
-/* Column Resizer */
-.resizer {
-    width: 4px;
-    height: 100%;
-    cursor: col-resize;
-    position: absolute;
-    right: 0;
-    top: 0;
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-.resizer:hover {
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.grid-Header{
-    display: flex;
-    justify-content: space-between;
-}
-
-.light .grid-Header{
-    background-color:#c7c7c7;
-}
-
-.dark {
-    background-color:#6d6d6d;
-    color:white;
-}
-
-/* Pagination */
+/* Pagination Section */
 .pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 10px;
-    gap: 10px;
-    font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .pagination button {
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    background-color: #f5f5f5;
-    cursor: pointer;
-    border-radius: 4px;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #e0e0e0;
 }
 
 .pagination button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
-.dark .pagination button {
-    background-color: #333;
-    color: #e0e0e0;
-    border: 1px solid #555;
+/* Grid Settings Section */
+.grid-Settings {
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Hover effect */
-.pagination button:hover:not(:disabled) {
-    background-color: #007bff;
-    color: #fff;
+.display-range {
+  font-size: 12px;
+  opacity: .7;
 }
 
-.grid-Settings{
-    display: grid;
-    place-items: center;
-    margin-right: 10px;
+/* Main Container with scrolling */
+.my-grid-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 500px;
+  /* Set height for scroll */
+  position: relative;
 }
 
-.display-range{
-    font-size: 12px;
-    opacity: .7;
+.my-grid-container-skeleton {
+  overflow-x: auto;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  display: grid;
+  height: 100vh;
+  place-items: center;
 }
 
-/* Sticky Header Section (includes headers + search boxes) */
+/* Table */
+.my-grid-table {
+  border-collapse: collapse;
+  width: max-content;
+  /* Allows horizontal scrolling if too many columns */
+  min-width: 100%;
+  table-layout: fixed;
+}
+
+.my-grid-table th,
+.my-grid-table td {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 500px;
+  min-width: 150px;
+}
+
+
+.my-grid-table thead .sum-row .sum-row-data {
+  text-align: right;
+}
+
+/* Sticky Headers, Filter Row, Sum Row */
+.sticky-header,
+.filter-row,
+.sum-row {
+  position: sticky;
+  z-index: 10;
+}
+
 .sticky-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
+  top: 0;
+  background-color: #f1f1f1;
+  z-index: 20;
+}
+
+.filter-row {
+  top: 35px;
+  background-color: #f9f9f9;
+  z-index: 15;
 }
 
 .sum-row {
-    position: sticky;
-    top: 60px;  /* Adjust this based on your header height */
-    z-index: 9;
-    font-weight: bold;
-    text-align: right;
+  bottom: 0;
+  background-color: #f1f1f1;
+  font-weight: bold;
+  z-index: 10;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  /* Vendor-prefixed property for Firefox */
+  appearance: textfield;
+  /* Standard property */
+}
+
+/* Column Header */
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px 8px;
+  background-color: #f1f1f1;
+}
+
+/* Sorting and Filter Icons */
+.column-header span {
+  margin-left: 6px;
+  font-size: 12px;
 }
 
 .filter-indicator {
-    color: #007bff;  /* or any color you want */
-    font-weight: bold;
-    margin-left: 4px;
+  font-size: 14px;
+  color: #007bff;
+}
+
+/* Filter Inputs */
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background-color: #f9f9f9;
+}
+
+/* Search box & Select box styling */
+.filter-container select,
+.filter-container input {
+  padding: 4px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  /* Center-align text inside inputs/selects */
+  outline: none;
+}
+
+/* Center-align dropdown options */
+.filter-container select option {
+  text-align: center;
+}
+
+.filter-container select {
+  max-width: 60px;
+}
+
+/* Zebra Striping & Hover */
+.my-grid-table tbody tr:nth-child(odd) {
+  background-color: #fdfdfd;
+}
+
+.my-grid-table tbody tr:nth-child(even) {
+  background-color: #f8f8f8;
+}
+
+.my-grid-table tbody tr:hover {
+  background-color: #f0f0f0;
+}
+
+/* Dark Theme */
+.dark-theme {
+  --grid-bg: #222;
+  color: #e0e0e0;
+  background-color: #222;
+}
+
+
+.dark-theme .sticky-header,
+.dark-theme .filter-row,
+.dark-theme .sum-row,
+.dark-theme .column-header {
+  background-color: #444;
+  color: #fff;
+}
+
+.dark-theme .filter-container select,
+.dark-theme .filter-container input {
+  background-color: #444;
+  color: #fff;
+  border-color: #666;
+}
+
+.dark-theme .pagination button {
+  background-color: #444;
+  color: #fff;
+  border-color: #666;
+}
+
+.dark-theme .my-grid-table th {
+  background-color: #222;
+  color: #f0f0f0;
+  border-color: #555;
+  max-width: 500px;
+}
+
+.dark-theme .my-grid-table td {
+  color: #f0f0f0;
+  border-color: #555;
+  max-width: 500px;
+  min-width: 150px;
+}
+
+.dark-theme .pagination button:hover:not(:disabled) {
+  background-color: #555;
+}
+
+/* Dark Mode - Zebra Striping */
+.dark-theme .my-grid-table tbody tr:nth-child(odd) {
+  background-color: #2c2c2c;
+  /* Slightly lighter row */
+}
+
+.dark-theme .my-grid-table tbody tr:nth-child(even) {
+  background-color: #1e1e1e;
+  /* Slightly darker row */
+}
+
+
+/* Hover works because there's no td background to block it */
+.dark-theme .my-grid-table tbody tr:hover {
+  background-color: #3a3a3a !important;
+  cursor: pointer;
+}
+
+.resizer {
+  width: 5px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  cursor: col-resize;
+  background-color: #ddd;
+}
+
+th {
+  position: relative;
+}
+
+.dark-theme .column-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2px;
+  height: 100%;
+  cursor: col-resize;
+  background-color: rgba(255, 255, 255, 0.693);
+  z-index: 10;
+}
+
+.dark-theme .column-resizer:hover {
+  background-color: rgba(220, 220, 220, 0.3);
+}
+
+
+.column-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2px;
+  height: 100%;
+  cursor: col-resize;
+  background-color: rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.column-resizer:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+  .grid-Header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .my-grid-table {
     font-size: 12px;
+  }
+
+  .filter-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-container select,
+  .filter-container .search-box {
+    width: 100%;
+  }
 }
 
-
-/* Sum Row directly under headers */
-.sum-column {
-    position: sticky;
-    top: 36px;
-    /* This depends on the height of the header row */
-    z-index: 1;
+/* Optional Scrollbar Styling */
+.my-grid-container::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
 }
 
-.sum-column tr {
-    background-color: rgba(0, 0, 0, 0.05);
-    font-weight: bold;
+.my-grid-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 5px;
 }
 
-.light .sum-column tr {
-    background-color: #f5f5f5;
-    color: #222;
-}
-
-.dark .sum-column tr {
-    background-color: #2a2a2a;
-    color: #e0e0e0;
-}
-
-.sum-column td {
-    padding: 10px;
-    text-align: left;
-    white-space: nowrap;
-}
-
-/* Rows and alternating colors */
-tbody tr:nth-child(odd) {
-    background-color: rgba(0, 0, 0, 0.03);
-}
-
-.light tbody tr:nth-child(odd) {
-    background-color: #f9f9f9;
-}
-
-.dark tbody tr:nth-child(odd) {
-    background-color: #2a2a2a;
-}
-
-.dark tbody tr:nth-child(even) {
-    background-color: #1e1e1e;
-}
-
-/* Hover row */
-tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-.dark tbody tr:hover {
-    background-color: rgba(136, 186, 101, 0.2);
-    color: black;
+.my-grid-container::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
 }

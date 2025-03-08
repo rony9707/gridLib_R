@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AgGridComponent } from '../../projects/ag-grid/src/public-api';
 import { products } from './excelData';
+import { delay, of } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -14,26 +15,34 @@ export class AppComponent {
   title = 'gridLib';
 
 
-  excelData = products
+  excelData = of(products).pipe(delay(2000))
 
   Config = {
     itemsPerPage: 100,
-    theme: 'light',
+    theme: 'dark-theme',
+    height: '500px',
     columns: [
-      { key: 'id', label: 'ID', searchable: false, sortable: true, type: 'number' },
-      { key: 'name', label: 'Name', searchable: true, sortable: true, type: 'text' },
-      { key: 'price', label: 'Price', searchable: true, sortable: true, summable: true, type: 'float' },
-      { key: 'date', label: 'Date', searchable: true, sortable: true, type: 'date' },
-      { key: 'productCategory', label: 'Product Category', searchable: true, sortable: true, type: 'text' },
-      { key: 'productStock', label: 'Product Stock', searchable: true, sortable: true, type: 'number' },
-      { key: 'productRating', label: 'Product Rating', searchable: true, sortable: true, type: 'number' },
-      { key: 'productSupplier', label: 'Product Supplier', searchable: true, sortable: true, type: 'text' },
-      { key: 'productColor', label: 'Product Color', searchable: true, sortable: true, type: 'text' },
-      { key: 'warrantyPeriod', label: 'Warranty Period', searchable: true, sortable: true, type: 'number' },
-      { key: 'discount', label: 'Discount', searchable: true, sortable: true, type: 'number' },
-      { key: 'isFeatured', label: 'isFeatured?', searchable: true, sortable: true, type: 'boolean' },
-      { key: 'deliveryType', label: 'Delivery Type', searchable: true, sortable: true, type: 'text' },
+      { key: 'id', label: 'ID', type: 'number',visible: false },
+      { key: 'name', label: 'Name', type: 'text' },
+      { key: 'price', label: 'Price', summable: true, type: 'float' },
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'productCategory', label: 'Product Category', type: 'text' },
+      { key: 'productStock', label: 'Product Stock', type: 'number' },
+      { key: 'productRating', label: 'Product Rating', type: 'number' },
+      { key: 'productSupplier', label: 'Product Supplier', type: 'text' },
+      { key: 'productColor', label: 'Product Color', type: 'text' },
+      { key: 'warrantyPeriod', label: 'Warranty Period', type: 'number' },
+      { key: 'discount', label: 'Discount', type: 'number' },
+      { key: 'isFeatured', label: 'isFeatured?', type: 'boolean' },
+      { key: 'deliveryType', label: 'Delivery Type', type: 'text' },
     ]
   };
+
+
+  handleSearch(filters: { column: string, operator: string, value: any }[]) {
+    console.log(filters)
+  }
+  
+  
 
 }

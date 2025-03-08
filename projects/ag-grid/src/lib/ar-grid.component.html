@@ -1,52 +1,82 @@
 <div class="grid-Header" [ngClass]="Config.theme">
-    <div class="pagination">
-        <button (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
-        <span>Page {{currentPage}} of {{totalPages}}</span>
-        <button (click)="nextPage()" [disabled]="currentPage >= totalPages">Next</button>
-    </div>
+  <div class="pagination">
+    <button (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+    <span>Page {{currentPage}} of {{totalPages}}</span>
+    <button (click)="nextPage()" [disabled]="currentPage >= totalPages">Next</button>
+  </div>
 
-    <div class="grid-Settings">
-        <div class="display-range">{{ displayRange }}</div>
-    </div>
+  <div class="grid-Settings">
+    <div class="display-range">{{ displayRange }}</div>
+    @if (isLoading) {
+    <button (click)="exportToExcel()">Export To Excel</button>
+    <button  *ngIf="isAnyFilterAppliedFlag" (click)="clearAllFilters()">Clear All Filters</button>
+    }
+  </div>
 </div>
 
-
+@if (isLoading) {
 <div [ngClass]="Config.theme" class="my-grid-container" [ngStyle]="{'height': Config.height, 'width': Config.width}">
-    <table class="my-grid-table">
-        <thead class="sticky-header">
-            <tr>
-                <th *ngFor="let column of ColumnHeadings" [ngStyle]="{'width': column.width || 'auto'}">
-                    <div class="column-header" (click)="onHeaderClick($event, column)">
-                        {{ column.label }}
-                        <span *ngIf="sortColumn === column.key">
-                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                        </span>
-                        <span *ngIf="isFilterApplied(column.key)" class="filter-indicator">🔍</span>
-                    </div>
+  <table class="my-grid-table">
+    <thead class="sticky-header">
+      <tr>
+        <th *ngFor="let column of ColumnHeadings" [ngStyle]="{'width': column.width || 'auto'}" libResizeColumns>
+
+          <div class="column-header" (click)="onHeaderClick($event, column)">
+            {{ column.label }}
+            <div>
+              <span *ngIf="sortColumn === column.key">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+              <span *ngIf="filterApplied[column.key]" (click)="$event.stopPropagation()" (click)="clearColumnFilter(column.key)">❌</span>
+              <span *ngIf="filterApplied[column.key]" class="filter-indicator">🔍</span>
+            </div>
+            <span class="column-resizer"></span>
+          </div>
+
+          <!-- Wrap select + search box in a container -->
+          <div class="filter-container">
+            <select *ngIf="column.type === 'number' || column.type === 'date' || column.type === 'float'"
+              [(ngModel)]="filterOperators[column.key]" (change)="applyFilters()">
+              <option value="=">Equal To</option>
+              <option value=">">Greater Than</option>
+              <option value="<">Less Than</option>
+              <option value=">=">Greater Than or Equal To</option>
+              <option value="<=">Less Than or Equal To</option>
+            </select>
 
 
-                    <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
-                        (input)="applyFilters()" (click)="$event.stopPropagation()"
-                        placeholder="Search {{column.label}}" [attr.type]="getInputType(column)" />
-                </th>
-            </tr>
-            <tr class="sum-row">
-                <td *ngFor="let column of ColumnHeadings">
-                    <ng-container *ngIf="isSummable(column)">
-                        {{ getColumnSum(column.key) }}
-                    </ng-container>
-                </td>
-            </tr>
-        </thead>
+            <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
+              (keyup.enter)="applyFilters()" (click)="$event.stopPropagation()" placeholder="Search {{column.label}}"
+              (keypress)="restrictInput($event,column.type)" [attr.type]="column | columnInputType" />
+          </div>
+
+        </th>
+
+      </tr>
+      <tr class="sum-row">
+        <td class="sum-row-data" *ngFor="let column of ColumnHeadings">
+          <ng-container *ngIf="isSummable(column)">
+            {{ filteredData | columnSum:column.key | formatNumber }}
+          </ng-container>
+        </td>
+      </tr>
+    </thead>
 
 
 
-        <tbody>
-            <tr *ngFor="let row of paginatedData">
-                <td *ngFor="let column of ColumnHeadings">
-                    {{ row[column.key] }}
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <tbody>
+      <tr *ngFor="let row of paginatedData">
+        <td *ngFor="let column of ColumnHeadings">
+          {{ row[column.key] }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>
+}
+@else {
+<div [ngClass]="Config.theme" class="my-grid-container-skeleton"
+  [ngStyle]="{'height': Config.height, 'width': Config.width}">
+  Loading...
+</div>
+}

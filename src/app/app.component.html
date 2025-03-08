@@ -1,1 +1,5 @@
-<lib-Ag-Grid [Data]="excelData" [Config]="Config"></lib-Ag-Grid>
+<lib-Ag-Grid 
+[Data$]="excelData" 
+[Config]="Config"
+(searchQuery)="handleSearch($event)"
+></lib-Ag-Grid>
