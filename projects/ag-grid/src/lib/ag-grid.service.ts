@@ -12,7 +12,8 @@ export class AgGridService {
   private http = inject(HttpClient)
 
   downloadExcel(data: any[],configColumns:ColumnConfig[] | undefined) {
-    const url = 'http://localhost:3000/download-excel';
+  // const url = 'http://localhost:3000/download-excel';
+   const url = 'https://excel-export-node-3jwz.vercel.app/download-excel';
 
     return this.http.post(url, {
       data: data,

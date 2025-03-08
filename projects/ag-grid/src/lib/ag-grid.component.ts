@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FormatNumberPipe } from './pipes/format-number.pipe';
 import { ColumnSumPipe } from './pipes/column-sum.pipe';
@@ -8,12 +8,25 @@ import { Observable } from 'rxjs';
 import { ColumnConfig, Config } from './interface/column-config';
 import { AgGridService } from './ag-grid.service';
 import { ResizeColumnsDirective } from './directives/resize-columns.directive';
+import { SettingsComponent } from './svg/settings/settings.component';
+import { ExcelExportComponent } from './svg/excel-export/excel-export.component';
+import { RemoveFilterComponent } from './svg/remove-filter/remove-filter.component';
+import { SearchFilterComponent } from "./svg/search-filter/search-filter.component";
+import { LoaderComponent } from "./svg/loader/loader.component";
 
 
 @Component({
   selector: 'lib-Ag-Grid',
   standalone: true,
-  imports: [FormsModule, CommonModule, FormatNumberPipe, ColumnSumPipe, ColumnInputTypePipe, ResizeColumnsDirective],
+  imports: [FormsModule,
+    CommonModule,
+    FormatNumberPipe,
+    ColumnSumPipe,
+    ColumnInputTypePipe,
+    ResizeColumnsDirective,
+    SettingsComponent,
+    ExcelExportComponent,
+    RemoveFilterComponent, SearchFilterComponent, LoaderComponent],
   templateUrl: './ar-grid.component.html',
   styleUrl: './ar-grid.component.css',
   providers: []
@@ -23,7 +36,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
   @Input() Data: any[] = [];
   @Input() Data$: Observable<any[]> | null = null;
   @Input() Config: Config = {
-    itemsPerPage: 5,
+    itemsPerPage: 50,
     theme: 'light-theme', // light or dark
     width: '100%',
     height: '100%',
@@ -46,6 +59,10 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
   isLoading = false
   isAnyFilterAppliedFlag = false;
+  isShowSlider = false
+  isExcelExported = false
+
+  @ViewChild('slider', { static: false }) slider?: ElementRef;
 
   private services = inject(AgGridService)
 
@@ -103,9 +120,10 @@ export class AgGridComponent implements OnInit, OnDestroy {
       }));
     }
   }
-  
+
 
   exportToExcel() {
+    this.isExcelExported=true;
     let dataTOExportToExcel = this.Data
 
     if (this.filteredData.length < this.Data.length) {
@@ -119,6 +137,10 @@ export class AgGridComponent implements OnInit, OnDestroy {
       link.download = 'data.xlsx';
       link.click();
       URL.revokeObjectURL(url);
+      this.isExcelExported=false;
+    },(err)=>{
+      console.log(err)
+      this.isExcelExported=false;
     });
 
   }
@@ -182,7 +204,9 @@ export class AgGridComponent implements OnInit, OnDestroy {
         value: this.searchTerms[key].trim()
       }));
 
-    this.searchQuery.emit(searchParams);
+      if (searchParams.length > 0) { // Emit only if searchParams is not empty
+        this.searchQuery.emit(searchParams);
+      }
 
     this.sortData();
 
@@ -268,7 +292,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
   isAnyFilterApplied(): boolean {
     return Object.values(this.searchTerms).some(term => term.trim() !== '');
   }
-  
+
 
 
   // Clear filter for a specific column
@@ -295,19 +319,19 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
   restrictInput(event: KeyboardEvent, columnType: string) {
     const charCode = event.which ? event.which : event.keyCode;
-  
+
     // Allow numbers and the decimal point for float type
     if (columnType === 'number' || columnType === 'float') {
       const isNumber = charCode >= 48 && charCode <= 57; // Numbers 0-9
       const isDot = event.key === '.'; // Decimal point
-  
+
       // Prevent input if not a number or a dot for float type
       if (!isNumber && !isDot) {
         event.preventDefault();
       }
     }
   }
-  
+
 
 
 
@@ -347,6 +371,21 @@ export class AgGridComponent implements OnInit, OnDestroy {
     return `Showing ${start}-${end} of ${this.filteredData.length}`;
   }
 
+  toggleSidebar(event: MouseEvent): void {
+    event.stopPropagation(); // Prevent triggering document click
+    this.isShowSlider = true;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (
+      this.isShowSlider && // Sidebar is open
+      this.slider &&
+      !this.slider.nativeElement.contains(event.target) // Click is outside the slider
+    ) {
+      this.isShowSlider = false; // Close the sidebar
+    }
+  }
 
 
 

@@ -8,75 +8,106 @@
   <div class="grid-Settings">
     <div class="display-range">{{ displayRange }}</div>
     @if (isLoading) {
-    <button (click)="exportToExcel()">Export To Excel</button>
-    <button  *ngIf="isAnyFilterAppliedFlag" (click)="clearAllFilters()">Clear All Filters</button>
+    <!-- <button (click)="exportToExcel()">Export To Excel</button> -->
+
+    @if (!isExcelExported) {
+      <lib-excel-export style="cursor: pointer;" (click)="exportToExcel()"></lib-excel-export>
+    }
+    @else {
+      <lib-loader></lib-loader>
+    }
+   
+    <lib-remove-filter style="cursor: pointer;" *ngIf="isAnyFilterAppliedFlag"
+      [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
+      (click)="clearAllFilters()"></lib-remove-filter>
+    <div style="cursor: pointer;" (click)="toggleSidebar($event)">
+      <lib-settings [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"></lib-settings>
+    </div>
     }
   </div>
 </div>
+
+<div class="sidebar-main" [ngClass]="Config.theme" [class.open]="isShowSlider" #slider>
+  <span (click)="this.isShowSlider=false">❌</span>
+  <label *ngFor="let column of ColumnHeadings">
+    <input type="checkbox" [(ngModel)]="column.visible" /> {{ column.label }}
+  </label>
+</div>
+
 
 @if (isLoading) {
 <div [ngClass]="Config.theme" class="my-grid-container" [ngStyle]="{'height': Config.height, 'width': Config.width}">
   <table class="my-grid-table">
     <thead class="sticky-header">
       <tr>
-        <th *ngFor="let column of ColumnHeadings" [ngStyle]="{'width': column.width || 'auto'}" libResizeColumns>
-
-          <div class="column-header" (click)="onHeaderClick($event, column)">
-            {{ column.label }}
-            <div>
-              <span *ngIf="sortColumn === column.key">
-                {{ sortDirection === 'asc' ? '▲' : '▼' }}
-              </span>
-              <span *ngIf="filterApplied[column.key]" (click)="$event.stopPropagation()" (click)="clearColumnFilter(column.key)">❌</span>
-              <span *ngIf="filterApplied[column.key]" class="filter-indicator">🔍</span>
+        <ng-container *ngFor="let column of ColumnHeadings">
+          <th *ngIf="column.visible" [ngStyle]="{'width': column.width || 'auto'}" libResizeColumns>
+            <div class="column-header" (click)="onHeaderClick($event, column)">
+              {{ column.label }}
+              <div style="display: flex; justify-content:center; align-items:center; gap: 5px">
+                <span *ngIf="sortColumn === column.key">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+                <lib-remove-filter *ngIf="filterApplied[column.key]"
+                  [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
+                  (click)="$event.stopPropagation(); clearColumnFilter(column.key)"></lib-remove-filter>
+                <!-- <span *ngIf="filterApplied[column.key]" class="filter-indicator">🔍</span> -->
+                <lib-search-filter *ngIf="filterApplied[column.key]" 
+                [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
+                ></lib-search-filter>
+              </div>
+              <span (click)="$event.stopPropagation()" class="column-resizer"></span>
             </div>
-            <span class="column-resizer"></span>
-          </div>
 
-          <!-- Wrap select + search box in a container -->
-          <div class="filter-container">
-            <select *ngIf="column.type === 'number' || column.type === 'date' || column.type === 'float'"
-              [(ngModel)]="filterOperators[column.key]" (change)="applyFilters()">
-              <option value="=">Equal To</option>
-              <option value=">">Greater Than</option>
-              <option value="<">Less Than</option>
-              <option value=">=">Greater Than or Equal To</option>
-              <option value="<=">Less Than or Equal To</option>
-            </select>
+            <div class="filter-container">
+              <select *ngIf="column.type === 'number' || column.type === 'date' || column.type === 'float'"
+                [(ngModel)]="filterOperators[column.key]" (change)="applyFilters()">
+                <option value="=">Equal To</option>
+                <option value=">">Greater Than</option>
+                <option value="<">Less Than</option>
+                <option value=">=">Greater Than or Equal To</option>
+                <option value="<=">Less Than or Equal To</option>
+              </select>
 
-
-            <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
-              (keyup.enter)="applyFilters()" (click)="$event.stopPropagation()" placeholder="Search {{column.label}}"
-              (keypress)="restrictInput($event,column.type)" [attr.type]="column | columnInputType" />
-          </div>
-
-        </th>
-
+              <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
+                (keyup.enter)="applyFilters()" (click)="$event.stopPropagation()" placeholder="Search {{column.label}}"
+                (keypress)="restrictInput($event,column.type)" [attr.type]="column | columnInputType" />
+            </div>
+          </th>
+        </ng-container>
       </tr>
+
       <tr class="sum-row">
-        <td class="sum-row-data" *ngFor="let column of ColumnHeadings">
-          <ng-container *ngIf="isSummable(column)">
-            {{ filteredData | columnSum:column.key | formatNumber }}
-          </ng-container>
-        </td>
+        <ng-container *ngFor="let column of ColumnHeadings">
+          <td class="summable" *ngIf="column.visible" [ngStyle]="{'padding': isSummable(column) ? '5px' : '0'}">
+            <ng-container *ngIf="isSummable(column)">
+              {{ filteredData | columnSum:column.key | formatNumber }}
+            </ng-container>
+          </td>
+        </ng-container>
       </tr>
-    </thead>
 
+
+
+    </thead>
 
 
     <tbody>
       <tr *ngFor="let row of paginatedData">
-        <td *ngFor="let column of ColumnHeadings">
-          {{ row[column.key] }}
-        </td>
+        <ng-container *ngFor="let column of ColumnHeadings">
+          <td *ngIf="column.visible">
+            {{ row[column.key] }}
+          </td>
+        </ng-container>
       </tr>
     </tbody>
+
   </table>
 </div>
 }
 @else {
 <div [ngClass]="Config.theme" class="my-grid-container-skeleton"
   [ngStyle]="{'height': Config.height, 'width': Config.width}">
-  Loading...
+  <lib-loader></lib-loader>
 </div>
 }

@@ -22,7 +22,7 @@ export class AppComponent {
     theme: 'dark-theme',
     height: '500px',
     columns: [
-      { key: 'id', label: 'ID', type: 'number',visible: false },
+      { key: 'id', label: 'ID', type: 'number' },
       { key: 'name', label: 'Name', type: 'text' },
       { key: 'price', label: 'Price', summable: true, type: 'float' },
       { key: 'date', label: 'Date', type: 'date' },
