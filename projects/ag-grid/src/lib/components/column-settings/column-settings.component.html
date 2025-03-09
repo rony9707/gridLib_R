@@ -1,0 +1,17 @@
+<div class="sidebar-main" [ngClass]="Config.theme" [class.open]="isShowSlider" #slider cdkDropList
+  (cdkDropListDropped)="dropColumn($event)">
+
+  <span (click)="closeSlider()">❌</span>
+
+  <!-- "Select All" / "Deselect All" Checkbox -->
+  <label class="select-all" [ngClass]="Config.theme">
+    <input type="checkbox" (click)="$event.stopPropagation()" [checked]="areAllColumnsSelected()"
+      (change)="toggleAllColumns($event)" />
+    {{ areAllColumnsSelected() ? 'Deselect All' : 'Select All' }}
+  </label>
+
+  <label class="select-checkbox" [ngClass]="Config.theme" *ngFor="let column of ColumnHeadings; let i = index" cdkDrag
+    (cdkDragStarted)="onDragStarted()" cdkDragBoundary=".sidebar-main">
+    <input type="checkbox" [(ngModel)]="column.visible" /> {{ column.label }}
+  </label>
+</div>

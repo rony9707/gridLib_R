@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { FormatNumberPipe } from './pipes/format-number.pipe';
 import { ColumnSumPipe } from './pipes/column-sum.pipe';
 import { ColumnInputTypePipe } from './pipes/column-input-type.pipe';
@@ -8,14 +8,14 @@ import { Observable } from 'rxjs';
 import { ColumnConfig, Config } from './interface/column-config';
 import { AgGridService } from './ag-grid.service';
 import { ResizeColumnsDirective } from './directives/resize-columns.directive';
-import { SettingsComponent } from './svg/settings/settings.component';
-import { ExcelExportComponent } from './svg/excel-export/excel-export.component';
 import { RemoveFilterComponent } from './svg/remove-filter/remove-filter.component';
 import { SearchFilterComponent } from "./svg/search-filter/search-filter.component";
 import { LoaderComponent } from "./svg/loader/loader.component";
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { PaginationComponent } from "./components/pagination/pagination.component";
+import { GridSettingsComponent } from "./components/grid-settings/grid-settings.component";
+import { ColumnSettingsComponent } from './components/column-settings/column-settings.component';
 
 @Component({
   selector: 'lib-Ag-Grid',
@@ -25,13 +25,11 @@ import { PaginationComponent } from "./components/pagination/pagination.componen
     ColumnSumPipe,
     ColumnInputTypePipe,
     ResizeColumnsDirective,
-    SettingsComponent,
-    ExcelExportComponent,
     RemoveFilterComponent,
     SearchFilterComponent,
     LoaderComponent,
     DragDropModule,
-    CommonModule, PaginationComponent],
+    CommonModule, PaginationComponent, GridSettingsComponent, ColumnSettingsComponent],
   templateUrl: './ar-grid.component.html',
   styleUrl: './ar-grid.component.css'
 })
@@ -68,6 +66,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
   isDragging = false;
 
   @ViewChild('slider', { static: false }) slider?: ElementRef;
+  @ViewChild(ColumnSettingsComponent, { static: true }) columnSettingsComp!: ColumnSettingsComponent;
 
   private services = inject(AgGridService)
 
@@ -128,6 +127,20 @@ export class AgGridComponent implements OnInit, OnDestroy {
   }
 
 
+  // Code Related to Pagenation Component START--------------------------------------------------
+  paginateData() {
+    const start = (this.currentPage - 1) * this.Config.itemsPerPage;
+    const end = start + this.Config.itemsPerPage;
+    this.paginatedData = this.filteredData.slice(start, end);
+  }
+  onPageChange(newPage: number) {
+    this.currentPage = newPage;
+    this.paginateData();
+  }
+  // Code Related to Pagenation Component END--------------------------------------------------
+
+
+  // Code Related to Grid Settings Component START--------------------------------------------------
   exportToExcel() {
     this.isExcelExported = true;
     let dataTOExportToExcel = this.filteredData.length < this.Data.length ? this.filteredData : this.Data;
@@ -161,7 +174,56 @@ export class AgGridComponent implements OnInit, OnDestroy {
     );
   }
 
+  // Clear all filters
+  clearAllFilters(): void {
+    this.searchTerms = {}; // Clear all search terms
+    //this.filterOperators = {}; // Clear all filter operators
+    this.applyFilters(); // Reapply filters to update the table
+  }
 
+  toggleSidebar(event: MouseEvent): void {
+    event.stopPropagation(); // Prevent triggering document click
+    this.isShowSlider = true;
+  }
+
+  get displayRange(): string {
+    const start = (this.currentPage - 1) * this.Config.itemsPerPage + 1;
+    const end = Math.min(start + this.Config.itemsPerPage - 1, this.filteredData.length);
+    return `Showing ${start}-${end} of ${this.filteredData.length}`;
+  }
+
+  // Code Related to Grid Settings Component END-------------------------------------------------
+
+
+  // Code Related to Column Settings Component START-------------------------------------------------
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.isDragging) {
+      this.isDragging = false;
+      return;
+    }
+
+    if (
+      this.isShowSlider &&
+      this.columnSettingsComp?.sliderRef &&
+      !this.columnSettingsComp.sliderRef.nativeElement.contains(event.target)
+    ) {
+      this.isShowSlider = false;
+    }
+  }
+
+  closeSlider($status: boolean) {
+    this.isShowSlider = $status;
+  }
+
+  isDragginFunc($isDragged: boolean) {
+    this.isDragging = $isDragged;
+  }
+
+  updateColumnOrder(updatedColumns: any[]) {
+    this.ColumnHeadings = [...updatedColumns];
+  }
+  // Code Related to Column Settings Component END-------------------------------------------------
 
   applyFilters() {
     this.isAnyFilterAppliedFlag = false;
@@ -274,18 +336,6 @@ export class AgGridComponent implements OnInit, OnDestroy {
   }
 
 
-  // Code Related to Pagenation Component--------------------------------------------------
-  paginateData() {
-    const start = (this.currentPage - 1) * this.Config.itemsPerPage;
-    const end = start + this.Config.itemsPerPage;
-    this.paginatedData = this.filteredData.slice(start, end);
-  }
-  onPageChange(newPage: number) {
-    this.currentPage = newPage;
-    this.paginateData();
-  }
-
-
   get totalPages() {
     return Math.ceil(this.filteredData.length / this.Config.itemsPerPage);
   }
@@ -309,13 +359,6 @@ export class AgGridComponent implements OnInit, OnDestroy {
   clearColumnFilter(columnKey: string): void {
     this.searchTerms[columnKey] = ''; // Clear the search term
     //this.filterOperators[columnKey] = ''; // Clear the filter operator
-    this.applyFilters(); // Reapply filters to update the table
-  }
-
-  // Clear all filters
-  clearAllFilters(): void {
-    this.searchTerms = {}; // Clear all search terms
-    //this.filterOperators = {}; // Clear all filter operators
     this.applyFilters(); // Reapply filters to update the table
   }
 
@@ -346,7 +389,6 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
 
   startResize(event: MouseEvent, column: any) {
-    console.log(event)
     const targetElement = event.target as HTMLElement;
 
     // Ensure parentElement exists
@@ -375,37 +417,6 @@ export class AgGridComponent implements OnInit, OnDestroy {
   }
 
 
-  get displayRange(): string {
-    const start = (this.currentPage - 1) * this.Config.itemsPerPage + 1;
-    const end = Math.min(start + this.Config.itemsPerPage - 1, this.filteredData.length);
-    return `Showing ${start}-${end} of ${this.filteredData.length}`;
-  }
-
-  toggleSidebar(event: MouseEvent): void {
-    event.stopPropagation(); // Prevent triggering document click
-    this.isShowSlider = true;
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (this.isDragging) {
-      this.isDragging = false; // Reset dragging state
-      return; // Skip closing sidebar
-    }
-
-    if (
-      this.isShowSlider && // Sidebar is open
-      this.slider &&
-      !this.slider.nativeElement.contains(event.target) // Click is outside the slider
-    ) {
-      this.isShowSlider = false; // Close the sidebar
-    }
-  }
-
-  dropColumn(event: CdkDragDrop<string[]>) {
-    moveItemInArray(this.ColumnHeadings, event.previousIndex, event.currentIndex);
-  }
-
 
   dropColumnMain(event: CdkDragDrop<ColumnConfig[]>) {
     // Get visible columns
@@ -426,23 +437,5 @@ export class AgGridComponent implements OnInit, OnDestroy {
       this.ColumnHeadings.splice(newIndex, 0, movedColumn);
     }
   }
-
-
-  // Track when dragging starts
-  onDragStarted() {
-    this.isDragging = true;
-  }
-
-  // Method to check if all columns are selected
-  areAllColumnsSelected(): boolean {
-    return this.ColumnHeadings.every(column => column.visible);
-  }
-
-  // Method to toggle all columns' visibility
-  toggleAllColumns(event: Event) {
-    const isChecked = (event.target as HTMLInputElement).checked;
-    this.ColumnHeadings.forEach(column => column.visible = isChecked);
-  }
-
 
 }

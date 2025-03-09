@@ -1,0 +1,13 @@
+/* Grid Settings Section */
+:host {
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.display-range {
+  font-size: 12px;
+  opacity: .7;
+}

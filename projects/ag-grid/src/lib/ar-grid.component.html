@@ -5,46 +5,16 @@
   </lib-pagination>
 
 
-  <div class="grid-Settings">
-    <div class="display-range">{{ displayRange }}</div>
-    @if (isLoading) {
-    <!-- <button (click)="exportToExcel()">Export To Excel</button> -->
+  <lib-grid-settings [displayRange]="displayRange" [isLoading]="isLoading" [isExcelExported]="isExcelExported"
+    [isAnyFilterAppliedFlag]="isAnyFilterAppliedFlag" [theme]="Config.theme" (exportToExcel)="exportToExcel()"
+    (clearAllFilters)="clearAllFilters()" (toggleSidebar)="toggleSidebar($event)"></lib-grid-settings>
 
-    @if (!isExcelExported) {
-    <lib-excel-export style="cursor: pointer;" (click)="exportToExcel()"></lib-excel-export>
-    }
-    @else {
-    <lib-loader></lib-loader>
-    }
-
-    <lib-remove-filter style="cursor: pointer;" *ngIf="isAnyFilterAppliedFlag"
-      [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
-      (click)="clearAllFilters()"></lib-remove-filter>
-    <div style="cursor: pointer;" (click)="toggleSidebar($event)">
-      <lib-settings [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"></lib-settings>
-    </div>
-    }
-  </div>
 </div>
 
 
-<div class="sidebar-main" [ngClass]="Config.theme" [class.open]="isShowSlider" #slider cdkDropList
-  (cdkDropListDropped)="dropColumn($event)">
-
-  <span (click)="this.isShowSlider=false">❌</span>
-
-  <!-- "Select All" / "Deselect All" Checkbox -->
-  <label class="select-all" [ngClass]="Config.theme">
-    <input type="checkbox" [checked]="areAllColumnsSelected()" (change)="toggleAllColumns($event)" />
-    {{ areAllColumnsSelected() ? 'Deselect All' : 'Select All' }}
-  </label>
-
-  <label class="select-checkbox" [ngClass]="Config.theme" *ngFor="let column of ColumnHeadings; let i = index" cdkDrag
-    (cdkDragStarted)="onDragStarted()" cdkDragBoundary=".sidebar-main">
-    <input type="checkbox" [(ngModel)]="column.visible" /> {{ column.label }}
-  </label>
-</div>
-
+<lib-column-settings [ColumnHeadings]="ColumnHeadings" #slider [Config]="Config" [isShowSlider]="isShowSlider"
+  (sliderState)="closeSlider($event)" (isDragging)="isDragginFunc($event)"
+  (columnOrderChanged)="updateColumnOrder($event)"></lib-column-settings>
 
 
 @if (isLoading) {
@@ -55,6 +25,8 @@
         <ng-container *ngFor="let column of ColumnHeadings; let j = index">
           <th *ngIf="column.visible" [ngStyle]="{'width': column.width || 'auto'}" libResizeColumns cdkDrag
             cdkDragBoundary=".my-grid-table" cdkDragLockAxis="x">
+
+            <!-- Column Header with Drag Handle -->
             <div class="column-header" cdkDragHandle (click)="onHeaderClick($event, column)">
               {{ column.label }}
               <div style="display: flex; justify-content:center; align-items:center; gap: 5px">
@@ -63,13 +35,19 @@
                 </span>
                 <lib-remove-filter *ngIf="filterApplied[column.key]"
                   [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
-                  (click)="$event.stopPropagation(); clearColumnFilter(column.key)"></lib-remove-filter>
+                  (click)="$event.stopPropagation(); clearColumnFilter(column.key)">
+                </lib-remove-filter>
                 <lib-search-filter *ngIf="filterApplied[column.key]"
-                  [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"></lib-search-filter>
+                  [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'">
+                </lib-search-filter>
               </div>
-              <span (click)="$event.stopPropagation()" class="column-resizer"></span>
             </div>
 
+            <!-- Column Resizer -->
+            <span class="column-resizer" (mousedown)="startResize($event, column)" (click)="$event.stopPropagation()">
+            </span>
+
+            <!-- Filter Section -->
             <div class="filter-container">
               <select *ngIf="column.type === 'number' || column.type === 'date' || column.type === 'float'"
                 [(ngModel)]="filterOperators[column.key]" (change)="applyFilters()">
@@ -81,10 +59,12 @@
               </select>
 
               <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
-                (keyup.enter)="applyFilters()" (click)="$event.stopPropagation()" placeholder="Search {{column.label}}"
-                (keypress)="restrictInput($event,column.type)" [attr.type]="column | columnInputType" />
+                (keyup.enter)="applyFilters()" (click)="$event.stopPropagation()"
+                placeholder="Search {{ column.label }}" (keypress)="restrictInput($event,column.type)"
+                [attr.type]="column | columnInputType" />
             </div>
           </th>
+
         </ng-container>
       </tr>
 

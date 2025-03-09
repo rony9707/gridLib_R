@@ -1,1 +1,19 @@
-<p>grid-settings works!</p>
+<div class="display-range">{{ displayRange }}</div>
+
+@if (isLoading) {
+@if (!isExcelExported) {
+<lib-excel-export style="cursor: pointer;" (click)="onExportToExcel()"></lib-excel-export>
+}
+@else {
+<lib-loader></lib-loader>
+}
+
+@if(isAnyFilterAppliedFlag){
+<lib-remove-filter style="cursor: pointer;" [fillColor]="iconColor" (click)="onClearFilters()">
+</lib-remove-filter>
+}
+
+<div style="cursor: pointer;" (click)="onToggleSidebar($event)">
+  <lib-settings [fillColor]="iconColor"></lib-settings>
+</div>
+}
