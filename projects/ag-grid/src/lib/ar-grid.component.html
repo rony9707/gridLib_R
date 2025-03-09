@@ -1,9 +1,9 @@
 <div class="grid-Header" [ngClass]="Config.theme">
-  <div class="pagination">
-    <button (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
-    <span>Page {{currentPage}} of {{totalPages}}</span>
-    <button (click)="nextPage()" [disabled]="currentPage >= totalPages">Next</button>
-  </div>
+
+  <lib-pagination [currentPage]="currentPage" [totalPages]="totalPages" [theme]="Config.theme"
+    (pageChange)="onPageChange($event)">
+  </lib-pagination>
+
 
   <div class="grid-Settings">
     <div class="display-range">{{ displayRange }}</div>
@@ -11,12 +11,12 @@
     <!-- <button (click)="exportToExcel()">Export To Excel</button> -->
 
     @if (!isExcelExported) {
-      <lib-excel-export style="cursor: pointer;" (click)="exportToExcel()"></lib-excel-export>
+    <lib-excel-export style="cursor: pointer;" (click)="exportToExcel()"></lib-excel-export>
     }
     @else {
-      <lib-loader></lib-loader>
+    <lib-loader></lib-loader>
     }
-   
+
     <lib-remove-filter style="cursor: pointer;" *ngIf="isAnyFilterAppliedFlag"
       [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
       (click)="clearAllFilters()"></lib-remove-filter>
@@ -27,22 +27,35 @@
   </div>
 </div>
 
-<div class="sidebar-main" [ngClass]="Config.theme" [class.open]="isShowSlider" #slider>
+
+<div class="sidebar-main" [ngClass]="Config.theme" [class.open]="isShowSlider" #slider cdkDropList
+  (cdkDropListDropped)="dropColumn($event)">
+
   <span (click)="this.isShowSlider=false">❌</span>
-  <label *ngFor="let column of ColumnHeadings">
+
+  <!-- "Select All" / "Deselect All" Checkbox -->
+  <label class="select-all" [ngClass]="Config.theme">
+    <input type="checkbox" [checked]="areAllColumnsSelected()" (change)="toggleAllColumns($event)" />
+    {{ areAllColumnsSelected() ? 'Deselect All' : 'Select All' }}
+  </label>
+
+  <label class="select-checkbox" [ngClass]="Config.theme" *ngFor="let column of ColumnHeadings; let i = index" cdkDrag
+    (cdkDragStarted)="onDragStarted()" cdkDragBoundary=".sidebar-main">
     <input type="checkbox" [(ngModel)]="column.visible" /> {{ column.label }}
   </label>
 </div>
+
 
 
 @if (isLoading) {
 <div [ngClass]="Config.theme" class="my-grid-container" [ngStyle]="{'height': Config.height, 'width': Config.width}">
   <table class="my-grid-table">
     <thead class="sticky-header">
-      <tr>
-        <ng-container *ngFor="let column of ColumnHeadings">
-          <th *ngIf="column.visible" [ngStyle]="{'width': column.width || 'auto'}" libResizeColumns>
-            <div class="column-header" (click)="onHeaderClick($event, column)">
+      <tr cdkDropList (cdkDropListDropped)="dropColumnMain($event)" cdkDropListOrientation="horizontal">
+        <ng-container *ngFor="let column of ColumnHeadings; let j = index">
+          <th *ngIf="column.visible" [ngStyle]="{'width': column.width || 'auto'}" libResizeColumns cdkDrag
+            cdkDragBoundary=".my-grid-table" cdkDragLockAxis="x">
+            <div class="column-header" cdkDragHandle (click)="onHeaderClick($event, column)">
               {{ column.label }}
               <div style="display: flex; justify-content:center; align-items:center; gap: 5px">
                 <span *ngIf="sortColumn === column.key">
@@ -51,10 +64,8 @@
                 <lib-remove-filter *ngIf="filterApplied[column.key]"
                   [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
                   (click)="$event.stopPropagation(); clearColumnFilter(column.key)"></lib-remove-filter>
-                <!-- <span *ngIf="filterApplied[column.key]" class="filter-indicator">🔍</span> -->
-                <lib-search-filter *ngIf="filterApplied[column.key]" 
-                [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
-                ></lib-search-filter>
+                <lib-search-filter *ngIf="filterApplied[column.key]"
+                  [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"></lib-search-filter>
               </div>
               <span (click)="$event.stopPropagation()" class="column-resizer"></span>
             </div>
@@ -86,9 +97,6 @@
           </td>
         </ng-container>
       </tr>
-
-
-
     </thead>
 
 
@@ -101,9 +109,9 @@
         </ng-container>
       </tr>
     </tbody>
-
   </table>
 </div>
+
 }
 @else {
 <div [ngClass]="Config.theme" class="my-grid-container-skeleton"

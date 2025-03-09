@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, HostListener, inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FormatNumberPipe } from './pipes/format-number.pipe';
 import { ColumnSumPipe } from './pipes/column-sum.pipe';
@@ -13,23 +13,27 @@ import { ExcelExportComponent } from './svg/excel-export/excel-export.component'
 import { RemoveFilterComponent } from './svg/remove-filter/remove-filter.component';
 import { SearchFilterComponent } from "./svg/search-filter/search-filter.component";
 import { LoaderComponent } from "./svg/loader/loader.component";
-
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { PaginationComponent } from "./components/pagination/pagination.component";
 
 @Component({
   selector: 'lib-Ag-Grid',
   standalone: true,
   imports: [FormsModule,
-    CommonModule,
     FormatNumberPipe,
     ColumnSumPipe,
     ColumnInputTypePipe,
     ResizeColumnsDirective,
     SettingsComponent,
     ExcelExportComponent,
-    RemoveFilterComponent, SearchFilterComponent, LoaderComponent],
+    RemoveFilterComponent,
+    SearchFilterComponent,
+    LoaderComponent,
+    DragDropModule,
+    CommonModule, PaginationComponent],
   templateUrl: './ar-grid.component.html',
-  styleUrl: './ar-grid.component.css',
-  providers: []
+  styleUrl: './ar-grid.component.css'
 })
 export class AgGridComponent implements OnInit, OnDestroy {
 
@@ -61,6 +65,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
   isAnyFilterAppliedFlag = false;
   isShowSlider = false
   isExcelExported = false
+  isDragging = false;
 
   @ViewChild('slider', { static: false }) slider?: ElementRef;
 
@@ -81,6 +86,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
       this.initializeOperators();
       this.applyFilters();
     }
+
   }
 
   ngOnDestroy(): void {
@@ -123,27 +129,39 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
 
   exportToExcel() {
-    this.isExcelExported=true;
-    let dataTOExportToExcel = this.Data
+    this.isExcelExported = true;
+    let dataTOExportToExcel = this.filteredData.length < this.Data.length ? this.filteredData : this.Data;
 
-    if (this.filteredData.length < this.Data.length) {
-      dataTOExportToExcel = this.filteredData
-    }
+    // Use ColumnHeadings instead of Config.columns
+    const visibleColumns = this.ColumnHeadings.filter(col => col.visible !== false);
 
-    this.services.downloadExcel(dataTOExportToExcel, this.Config.columns).subscribe((blob) => {
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.href = url;
-      link.download = 'data.xlsx';
-      link.click();
-      URL.revokeObjectURL(url);
-      this.isExcelExported=false;
-    },(err)=>{
-      console.log(err)
-      this.isExcelExported=false;
+    // Map data to only include visible columns
+    const filteredData = dataTOExportToExcel.map(row => {
+      let filteredRow: any = {};
+      visibleColumns.forEach(col => {
+        filteredRow[col.key] = row[col.key];
+      });
+      return filteredRow;
     });
 
+    this.services.downloadExcel(filteredData, visibleColumns).subscribe(
+      (blob) => {
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = 'data.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
+        this.isExcelExported = false;
+      },
+      (err) => {
+        console.error(err);
+        this.isExcelExported = false;
+      }
+    );
   }
+
+
 
   applyFilters() {
     this.isAnyFilterAppliedFlag = false;
@@ -204,9 +222,9 @@ export class AgGridComponent implements OnInit, OnDestroy {
         value: this.searchTerms[key].trim()
       }));
 
-      if (searchParams.length > 0) { // Emit only if searchParams is not empty
-        this.searchQuery.emit(searchParams);
-      }
+    if (searchParams.length > 0) { // Emit only if searchParams is not empty
+      this.searchQuery.emit(searchParams);
+    }
 
     this.sortData();
 
@@ -255,26 +273,18 @@ export class AgGridComponent implements OnInit, OnDestroy {
     });
   }
 
+
+  // Code Related to Pagenation Component--------------------------------------------------
   paginateData() {
     const start = (this.currentPage - 1) * this.Config.itemsPerPage;
     const end = start + this.Config.itemsPerPage;
     this.paginatedData = this.filteredData.slice(start, end);
   }
-
-
-  nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.paginateData();
-    }
+  onPageChange(newPage: number) {
+    this.currentPage = newPage;
+    this.paginateData();
   }
 
-  prevPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.paginateData();
-    }
-  }
 
   get totalPages() {
     return Math.ceil(this.filteredData.length / this.Config.itemsPerPage);
@@ -378,6 +388,11 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
+    if (this.isDragging) {
+      this.isDragging = false; // Reset dragging state
+      return; // Skip closing sidebar
+    }
+
     if (
       this.isShowSlider && // Sidebar is open
       this.slider &&
@@ -387,6 +402,47 @@ export class AgGridComponent implements OnInit, OnDestroy {
     }
   }
 
+  dropColumn(event: CdkDragDrop<string[]>) {
+    moveItemInArray(this.ColumnHeadings, event.previousIndex, event.currentIndex);
+  }
+
+
+  dropColumnMain(event: CdkDragDrop<ColumnConfig[]>) {
+    // Get visible columns
+    const visibleColumns = this.ColumnHeadings.filter(col => col.visible);
+
+    // Ensure the dragged column exists in the visible list
+    if (event.previousIndex !== event.currentIndex && visibleColumns.length > 1) {
+      const movedColumn = visibleColumns[event.previousIndex];
+
+      // Get the actual index of the column in the full ColumnHeadings array
+      const oldIndex = this.ColumnHeadings.findIndex(col => col.key === movedColumn.key);
+      const newIndex = this.ColumnHeadings.findIndex(
+        col => col.key === visibleColumns[event.currentIndex].key
+      );
+
+      // Move column within the full ColumnHeadings array
+      this.ColumnHeadings.splice(oldIndex, 1);
+      this.ColumnHeadings.splice(newIndex, 0, movedColumn);
+    }
+  }
+
+
+  // Track when dragging starts
+  onDragStarted() {
+    this.isDragging = true;
+  }
+
+  // Method to check if all columns are selected
+  areAllColumnsSelected(): boolean {
+    return this.ColumnHeadings.every(column => column.visible);
+  }
+
+  // Method to toggle all columns' visibility
+  toggleAllColumns(event: Event) {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    this.ColumnHeadings.forEach(column => column.visible = isChecked);
+  }
 
 
 }
