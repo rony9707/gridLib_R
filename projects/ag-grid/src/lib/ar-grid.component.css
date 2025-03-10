@@ -124,8 +124,14 @@ input[type=number] {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background-color: #f9f9f9;
+  background-color: #f1f1f1;
 }
+
+.virtual-scroll-container {
+  overflow: auto;
+  height: calc(100% - 106px);
+}
+
 
 /* Search box & Select box styling */
 .filter-container select,

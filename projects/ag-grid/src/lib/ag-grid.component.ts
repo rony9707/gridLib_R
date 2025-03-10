@@ -16,6 +16,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { PaginationComponent } from "./components/pagination/pagination.component";
 import { GridSettingsComponent } from "./components/grid-settings/grid-settings.component";
 import { ColumnSettingsComponent } from './components/column-settings/column-settings.component';
+import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
 
 @Component({
   selector: 'lib-Ag-Grid',
@@ -29,7 +30,7 @@ import { ColumnSettingsComponent } from './components/column-settings/column-set
     SearchFilterComponent,
     LoaderComponent,
     DragDropModule,
-    CommonModule, PaginationComponent, GridSettingsComponent, ColumnSettingsComponent],
+    CommonModule, PaginationComponent, GridSettingsComponent, ColumnSettingsComponent, ScrollingModule],
   templateUrl: './ar-grid.component.html',
   styleUrl: './ar-grid.component.css'
 })
@@ -67,6 +68,8 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
   @ViewChild('slider', { static: false }) slider?: ElementRef;
   @ViewChild(ColumnSettingsComponent, { static: true }) columnSettingsComp!: ColumnSettingsComponent;
+  @ViewChild(CdkVirtualScrollViewport, { static: false })
+  public viewPort?: CdkVirtualScrollViewport;
 
   private services = inject(AgGridService)
 
@@ -124,6 +127,23 @@ export class AgGridComponent implements OnInit, OnDestroy {
         visible: true // Ensure default visibility
       }));
     }
+  }
+
+  public get inverseOfTranslation(): string {
+    if (!this.viewPort) {
+      return '-0px';
+    }
+    const offset = this.viewPort.getOffsetToRenderedContentStart();
+
+    return `-${offset}px`;
+  }
+
+  get adjustedHeight(): string {
+    if (!this.Config.height) {
+      return '0px'; // Default fallback if height is undefined
+    }
+    const heightValue = parseInt(this.Config.height, 10) || 0;
+    return `${heightValue - 106}px`;
   }
 
 

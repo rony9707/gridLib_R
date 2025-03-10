@@ -19,78 +19,85 @@
 
 @if (isLoading) {
 <div [ngClass]="Config.theme" class="my-grid-container" [ngStyle]="{'height': Config.height, 'width': Config.width}">
-  <table class="my-grid-table">
-    <thead class="sticky-header">
-      <tr cdkDropList (cdkDropListDropped)="dropColumnMain($event)" cdkDropListOrientation="horizontal">
-        <ng-container *ngFor="let column of ColumnHeadings; let j = index">
-          <th *ngIf="column.visible" [ngStyle]="{'width': column.width || 'auto'}" libResizeColumns cdkDrag
-            cdkDragBoundary=".my-grid-table" cdkDragLockAxis="x">
 
-            <!-- Column Header with Drag Handle -->
-            <div class="column-header" cdkDragHandle (click)="onHeaderClick($event, column)">
-              {{ column.label }}
-              <div style="display: flex; justify-content:center; align-items:center; gap: 5px">
-                <span *ngIf="sortColumn === column.key">
-                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                </span>
-                <lib-remove-filter *ngIf="filterApplied[column.key]"
-                  [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
-                  (click)="$event.stopPropagation(); clearColumnFilter(column.key)">
-                </lib-remove-filter>
-                <lib-search-filter *ngIf="filterApplied[column.key]"
-                  [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'">
-                </lib-search-filter>
+  <cdk-virtual-scroll-viewport [itemSize]="40" class="virtual-scroll-container" 
+
+    [ngStyle]="{'height': Config.height, 'width': Config.width}">
+
+    <table class="my-grid-table">
+
+      <!-- Sticky Header Inside Table -->
+      <thead class="sticky-header" [style.top]="inverseOfTranslation">
+        <tr cdkDropList (cdkDropListDropped)="dropColumnMain($event)" cdkDropListOrientation="horizontal">
+          <ng-container *ngFor="let column of ColumnHeadings; let j = index">
+            <th *ngIf="column.visible" [ngStyle]="{'width': column.width || 'auto'}" libResizeColumns cdkDrag
+              cdkDragBoundary=".my-grid-table" cdkDragLockAxis="x">
+
+              <div class="column-header" cdkDragHandle (click)="onHeaderClick($event, column)">
+                {{ column.label }}
+                <div class="header-icons">
+                  <span *ngIf="sortColumn === column.key">
+                    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                  </span>
+                  <lib-remove-filter *ngIf="filterApplied[column.key]"
+                    [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'"
+                    (click)="$event.stopPropagation(); clearColumnFilter(column.key)">
+                  </lib-remove-filter>
+                  <lib-search-filter *ngIf="filterApplied[column.key]"
+                    [fillColor]="Config.theme === 'dark-theme' ? '#ffffff' : '#000000'">
+                  </lib-search-filter>
+                </div>
               </div>
-            </div>
 
-            <!-- Column Resizer -->
-            <span class="column-resizer" (mousedown)="startResize($event, column)" (click)="$event.stopPropagation()">
-            </span>
+              <span class="column-resizer" (mousedown)="startResize($event, column)" (click)="$event.stopPropagation()">
+              </span>
 
-            <!-- Filter Section -->
-            <div class="filter-container">
-              <select *ngIf="column.type === 'number' || column.type === 'date' || column.type === 'float'"
-                [(ngModel)]="filterOperators[column.key]" (change)="applyFilters()">
-                <option value="=">Equal To</option>
-                <option value=">">Greater Than</option>
-                <option value="<">Less Than</option>
-                <option value=">=">Greater Than or Equal To</option>
-                <option value="<=">Less Than or Equal To</option>
-              </select>
+              <div class="filter-container">
+                <select *ngIf="column.type === 'number' || column.type === 'date' || column.type === 'float'"
+                  [(ngModel)]="filterOperators[column.key]" (change)="applyFilters()">
+                  <option value="=">Equal To</option>
+                  <option value=">">Greater Than</option>
+                  <option value="<">Less Than</option>
+                  <option value=">=">Greater Than or Equal To</option>
+                  <option value="<=">Less Than or Equal To</option>
+                </select>
+                <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
+                  (keyup.enter)="applyFilters()" (click)="$event.stopPropagation()"
+                  placeholder="Search {{ column.label }}" (keypress)="restrictInput($event,column.type)"
+                  [attr.type]="column | columnInputType" />
+              </div>
 
-              <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
-                (keyup.enter)="applyFilters()" (click)="$event.stopPropagation()"
-                placeholder="Search {{ column.label }}" (keypress)="restrictInput($event,column.type)"
-                [attr.type]="column | columnInputType" />
-            </div>
-          </th>
+            </th>
+          </ng-container>
+        </tr>
 
-        </ng-container>
-      </tr>
+        <tr class="sum-row">
+          <ng-container *ngFor="let column of ColumnHeadings">
+            <td class="summable" *ngIf="column.visible" [ngStyle]="{'padding': isSummable(column) ? '5px' : '0'}">
+              <ng-container *ngIf="isSummable(column)">
+                {{ filteredData | columnSum:column.key | formatNumber }}
+              </ng-container>
+            </td>
+          </ng-container>
+        </tr>
+      </thead>
 
-      <tr class="sum-row">
-        <ng-container *ngFor="let column of ColumnHeadings">
-          <td class="summable" *ngIf="column.visible" [ngStyle]="{'padding': isSummable(column) ? '5px' : '0'}">
-            <ng-container *ngIf="isSummable(column)">
-              {{ filteredData | columnSum:column.key | formatNumber }}
-            </ng-container>
-          </td>
-        </ng-container>
-      </tr>
-    </thead>
+      <!-- Table Body -->
+      <tbody>
+        <tr *cdkVirtualFor="let row of paginatedData">
+          <ng-container *ngFor="let column of ColumnHeadings">
+            <td *ngIf="column.visible" [ngStyle]="{'width': column.width || 'auto'}">
+              {{ row[column.key] }}
+            </td>
+          </ng-container>
+        </tr>
+      </tbody>
 
+    </table>
+  </cdk-virtual-scroll-viewport>
 
-    <tbody>
-      <tr *ngFor="let row of paginatedData">
-        <ng-container *ngFor="let column of ColumnHeadings">
-          <td *ngIf="column.visible">
-            {{ row[column.key] }}
-          </td>
-        </ng-container>
-      </tr>
-    </tbody>
-  </table>
 </div>
+
 
 }
 @else {
