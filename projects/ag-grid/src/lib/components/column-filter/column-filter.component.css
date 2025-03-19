@@ -1,0 +1,39 @@
+/* Filter Inputs */
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background-color: #f1f1f1;
+}
+
+
+/* Search box & Select box styling */
+.filter-container select,
+.filter-container input {
+  padding: 4px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  /* Center-align text inside inputs/selects */
+  outline: none;
+}
+
+/* Center-align dropdown options */
+.filter-container select option {
+  text-align: left;
+  padding: 2px 5px 2px 5px;
+}
+
+.filter-container select {
+  max-width: 60px;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  /* Vendor-prefixed property for Firefox */
+  appearance: textfield;
+  /* Standard property */
+}

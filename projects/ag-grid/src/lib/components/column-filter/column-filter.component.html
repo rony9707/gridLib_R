@@ -1,0 +1,22 @@
+<div class="filter-container">
+  <select *ngIf="column.type === 'number' || column.type === 'date' || column.type === 'float'"
+    [(ngModel)]="filterOperators[column.key]" (change)="applyFilters()">
+    <option value="=">Equal To</option>
+    <option value="!=">Not Equal To</option>
+    <option value=">">Greater Than</option>
+    <option value="<">Less Than</option>
+    <option value=">=">Greater Than or Equal To</option>
+    <option value="<=">Less Than or Equal To</option>
+  </select>
+
+  <select *ngIf="column.type === 'text'" [(ngModel)]="filterOperators[column.key]"
+    (change)="applyFilters()">
+    <option value="=">Equal To</option>
+    <option value="LIKE">Like</option>
+    <option value="NOT LIKE">Not Like</option>
+  </select>
+  <input class="search-box" *ngIf="column.searchable" [(ngModel)]="searchTerms[column.key]"
+    (keyup.enter)="applyFilters()" (click)="$event.stopPropagation()"
+    placeholder="Search {{ column.label }}" (keypress)="restrictInput($event,column.type)"
+    [attr.type]="column | columnInputType" />
+</div>

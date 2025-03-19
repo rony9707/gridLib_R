@@ -50,9 +50,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 500px;
   min-width: 150px;
 }
+
+.my-grid-table th {
+  max-width: 500px;
+}
+
+.my-grid-table td {
+  max-width: 200px;
+}
+
 
 .summable {
   text-align: right;
@@ -89,12 +97,6 @@
   z-index: 10;
 }
 
-input[type=number] {
-  -moz-appearance: textfield;
-  /* Vendor-prefixed property for Firefox */
-  appearance: textfield;
-  /* Standard property */
-}
 
 /* Column Header */
 .column-header {
@@ -113,46 +115,10 @@ input[type=number] {
   font-size: 12px;
 }
 
-.filter-indicator {
-  font-size: 14px;
-  color: #007bff;
-}
-
-/* Filter Inputs */
-.filter-container {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background-color: #f1f1f1;
-}
 
 .virtual-scroll-container {
   overflow: auto;
   height: calc(100% - 106px);
-}
-
-
-/* Search box & Select box styling */
-.filter-container select,
-.filter-container input {
-  padding: 4px;
-  font-size: 12px;
-  border: 1px solid #ccc;
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  /* Center-align text inside inputs/selects */
-  outline: none;
-}
-
-/* Center-align dropdown options */
-.filter-container select option {
-  text-align: center;
-}
-
-.filter-container select {
-  max-width: 60px;
 }
 
 /* Zebra Striping & Hover */
@@ -285,7 +251,6 @@ th {
   padding: 8px;
   background: #f8f9fa;
   margin-bottom: 5px;
-  border-radius: 4px;
   transition: background 0.2s ease-in-out; 
 }
 

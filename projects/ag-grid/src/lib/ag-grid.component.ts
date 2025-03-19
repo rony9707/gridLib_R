@@ -17,6 +17,7 @@ import { PaginationComponent } from "./components/pagination/pagination.componen
 import { GridSettingsComponent } from "./components/grid-settings/grid-settings.component";
 import { ColumnSettingsComponent } from './components/column-settings/column-settings.component';
 import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
+import { ColumnFilterComponent } from "./components/column-filter/column-filter.component";
 
 @Component({
   selector: 'lib-Ag-Grid',
@@ -24,13 +25,12 @@ import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrollin
   imports: [FormsModule,
     FormatNumberPipe,
     ColumnSumPipe,
-    ColumnInputTypePipe,
     ResizeColumnsDirective,
     RemoveFilterComponent,
     SearchFilterComponent,
     LoaderComponent,
     DragDropModule,
-    CommonModule, PaginationComponent, GridSettingsComponent, ColumnSettingsComponent, ScrollingModule],
+    CommonModule, PaginationComponent, GridSettingsComponent, ColumnSettingsComponent, ScrollingModule, ColumnFilterComponent],
   templateUrl: './ar-grid.component.html',
   styleUrl: './ar-grid.component.css'
 })
@@ -88,7 +88,6 @@ export class AgGridComponent implements OnInit, OnDestroy {
       this.initializeOperators();
       this.applyFilters();
     }
-
   }
 
   ngOnDestroy(): void {
@@ -100,7 +99,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
       if (column.type === 'number' || column.type === 'date' || column.type === 'float') {
         this.filterOperators[column.key] = '=';  // Default for numeric and date types
       } else if (column.type === 'text') {
-        this.filterOperators[column.key] = '%';  // Default for text fields
+        this.filterOperators[column.key] = 'LIKE';  // Default for text fields
       }
     });
   }
@@ -247,10 +246,11 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
   applyFilters() {
     this.isAnyFilterAppliedFlag = false;
+
     this.filteredData = this.Data.filter(item => {
       return this.ColumnHeadings.every(column => {
         const term = this.searchTerms[column.key]?.trim();
-        if (!term) return true;
+        if (!term) return true; // Skip if no filter applied
         this.isAnyFilterAppliedFlag = true;
 
         const value = item[column.key];
@@ -258,6 +258,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
         const operator = this.filterOperators[column.key] || '=';
 
+        // Number & Float Filtering
         if (column.type === 'number' || column.type === 'float') {
           const termValue = parseFloat(term);
           if (isNaN(termValue)) return false;
@@ -266,6 +267,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
           switch (operator) {
             case '=': return itemValue === termValue;
+            case '!=': return itemValue !== termValue;
             case '>': return itemValue > termValue;
             case '<': return itemValue < termValue;
             case '>=': return itemValue >= termValue;
@@ -274,6 +276,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
           }
         }
 
+        // Date Filtering
         if (column.type === 'date') {
           const termDate = new Date(term);
           if (isNaN(termDate.getTime())) return false;
@@ -283,6 +286,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
 
           switch (operator) {
             case '=': return itemValue === termValue;
+            case '!=': return itemValue !== termValue;
             case '>': return itemValue > termValue;
             case '<': return itemValue < termValue;
             case '>=': return itemValue >= termValue;
@@ -291,20 +295,34 @@ export class AgGridComponent implements OnInit, OnDestroy {
           }
         }
 
+        // Text Filtering (LIKE & NOT LIKE)
+        if (column.type === 'text') {
+          const textValue = value.toString().toLowerCase();
+          const searchTerm = term.toLowerCase();
+
+          switch (operator) {
+            case '=': return textValue === searchTerm;
+            case 'LIKE': return textValue.includes(searchTerm);
+            case 'NOT LIKE': return !textValue.includes(searchTerm);
+            default: return true;
+          }
+        }
+
+        // Default search for non-specified types
         return value.toString().toLowerCase().includes(term.toLowerCase());
       });
     });
 
     // Emit search query for API search
     const searchParams = Object.keys(this.searchTerms)
-      .filter(key => this.searchTerms[key]?.trim()) // Filter out empty searches
+      .filter(key => this.searchTerms[key]?.trim()) // Ignore empty searches
       .map(key => ({
         column: key,
         operator: this.filterOperators[key] || '=',
         value: this.searchTerms[key].trim()
       }));
 
-    if (searchParams.length > 0) { // Emit only if searchParams is not empty
+    if (searchParams.length > 0) {
       this.searchQuery.emit(searchParams);
     }
 
@@ -319,6 +337,7 @@ export class AgGridComponent implements OnInit, OnDestroy {
     this.currentPage = 1;
     this.paginateData();
   }
+
 
 
 
@@ -457,5 +476,6 @@ export class AgGridComponent implements OnInit, OnDestroy {
       this.ColumnHeadings.splice(newIndex, 0, movedColumn);
     }
   }
+
 
 }

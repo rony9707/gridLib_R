@@ -18,7 +18,7 @@ export class AppComponent {
   excelData = of(products).pipe(delay(2000))
 
   Config = {
-    itemsPerPage: 500,
+    itemsPerPage: 100,
     theme: 'light-theme',
     height: '500px',
     columns: [
